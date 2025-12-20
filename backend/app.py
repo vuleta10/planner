@@ -8,11 +8,11 @@ CORS(app)
 # ---------- DB CONNECTION ----------
 def get_db_connection():
     return psycopg2.connect(
-        host="localhost",
-        port=5433,
-        database="planner",   # ime baze
-        user="postgres",      # tvoj postgres user
-        password="superuser"   # tvoja šifra
+        host="db",              # Koristi ime servisa iz docker-compose.yml umesto 'localhost'
+        database="planner_db",  # Ime baze u docker-compose
+        user="user",            # Korisnik iz docker-compose
+        password="password",    # Lozinka iz docker-compose
+        port="5432"             # UNUTAR Dockera je uvek 5432   
     )
 
 # ---------- LOGIN (GET) ----------
