@@ -1,155 +1,232 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
+import { loginUser, registerUser, getTask, saveTask } from "./api";
 import "./App.css";
+import logoImage from "./images/logo.jpeg"; 
+
 
 function App() {
-  useEffect(() => {
-    const isLeapYear = (year) =>
-      (year % 4 === 0 && year % 100 !== 0 && year % 400 !== 0) ||
-      (year % 100 === 0 && year % 400 === 0);
-    const getFebDays = (year) => (isLeapYear(year) ? 29 : 28);
+  // Stanja za stranicu i korisnika
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  
+  // Stanja za modale
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
 
-    let calendar = document.querySelector(".calendar");
-    const month_names = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-    let month_picker = document.querySelector("#month-picker");
+  // Stanja za kalendar i zadatke
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [taskList, setTaskList] = useState("");
+  const [statusMsg, setStatusMsg] = useState("");
 
-    // ----- funkcija za generisanje kalendara -----
-    const generateCalendar = (month, year) => {
-      let calendar_days = document.querySelector(".calendar-days");
-      calendar_days.innerHTML = "";
-      let calendar_header_year = document.querySelector("#year");
-      let days_of_month = [
-        31, getFebDays(year), 31, 30, 31, 30,
-        31, 31, 30, 31, 30, 31
-      ];
-      let currentDate = new Date();
-      month_picker.innerHTML = month_names[month];
-      calendar_header_year.innerHTML = year;
-      let first_day = new Date(year, month);
+  const month_names = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
 
-      for (let i = 0; i <= days_of_month[month] + first_day.getDay() - 1; i++) {
-        let day = document.createElement("div");
-        if (i >= first_day.getDay()) {
-          day.innerHTML = i - first_day.getDay() + 1;
-          if (
-            i - first_day.getDay() + 1 === currentDate.getDate() &&
-            year === currentDate.getFullYear() &&
-            month === currentDate.getMonth()
-          ) {
-            day.classList.add("current-date");
-          }
-        }
-        calendar_days.appendChild(day);
-      }
-    };
+  const [currMonth, setCurrMonth] = useState(new Date().getMonth());
+  const [currYear, setCurrYear] = useState(new Date().getFullYear());
 
-    // ----- lista meseci -----
-    let month_list = calendar.querySelector(".month-list");
-    const month_list_render = () => {
-      month_names.forEach((e, index) => {
-        let month = document.createElement("div");
-        month.innerHTML = `<div>${e}</div>`;
-        month_list.append(month);
-        month.onclick = () => {
-          currentMonth.value = index;
-          generateCalendar(currentMonth.value, currentYear.value);
-          month_list.classList.replace("show", "hide");
-        };
-      });
-    };
-    month_list_render();
+  // Logika za dane
+  const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+  const getFebDays = (y) => (isLeapYear(y) ? 29 : 28);
+  const daysInMonth = [31, getFebDays(currYear), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-    // ----- logika meseci -----
-    month_list.classList.add("hideonce");
-    month_picker.onclick = () => {
-      month_list.classList.toggle("show");
-    };
+  // Navigacija meseci
+  const changeMonth = (offset) => {
+    let newMonth = currMonth + offset;
+    if (newMonth < 0) {
+      setCurrMonth(11);
+      setCurrYear(currYear - 1);
+    } else if (newMonth > 11) {
+      setCurrMonth(0);
+      setCurrYear(currYear + 1);
+    } else {
+      setCurrMonth(newMonth);
+    }
+  };
 
-    document.querySelector("#pre-year").onclick = () => {
-      --currentYear.value;
-      generateCalendar(currentMonth.value, currentYear.value);
-    };
-    document.querySelector("#next-year").onclick = () => {
-      ++currentYear.value;
-      generateCalendar(currentMonth.value, currentYear.value);
-    };
+  const handleDayClick = async (day) => {
+    if (!isLoggedIn) {
+      alert("Please login to manage tasks!");
+      return;
+    }
+    const datum = `${currYear}-${String(currMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    setSelectedDate(datum);
+    try {
+      const data = await getTask(username, datum);
+      setTaskList(data.task || "");
+    } catch { setTaskList(""); }
+  };
 
-    // ----- inicijalni prikaz -----
-    let currentDate = new Date();
-    let currentMonth = { value: currentDate.getMonth() };
-    let currentYear = { value: currentDate.getFullYear() };
-    generateCalendar(currentMonth.value, currentYear.value);
+  const handleAddTask = async () => {
+    if (!isLoggedIn) return alert("Login required");
+    try {
+      await saveTask(username, selectedDate, taskList);
+      alert("Task saved!");
+    } catch { alert("Failed to save."); }
+  };
 
-    // ----- prikaz vremena -----
-    const todayShowTime = document.querySelector(".time-formate");
-    const todayShowDate = document.querySelector(".date-formate");
-    const currshowDate = new Date();
-    const showCurrentDateOption = {
-      year: "numeric", month: "long", day: "numeric", weekday: "long"
-    };
-    const currentDateFormate = new Intl.DateTimeFormat(
-      "en-US", showCurrentDateOption
-    ).format(currshowDate);
-    todayShowDate.textContent = currentDateFormate;
+  const handleLogin = async () => {
+    try {
+      const res = await loginUser(username, password);
+      if (res.status === "ok") {
+        setIsLoggedIn(true);
+        setShowLoginModal(false);
+        setStatusMsg("");
+      } else { setStatusMsg("Invalid credentials"); }
+    } catch { setStatusMsg("Login failed"); }
+  };
+  
+  const handleJoin = async () => {
+    try {
+      // registerUser vraća res.data (ono što je poslao backend)
+      const data = await registerUser(username, password);
+      
+      // Pošto je axios uspešno izvršen (status 201), 
+      // možemo smatrati da je registracija uspela.
+      console.log("Server response data:", data); // Pogledaj u konzoli šta tačno piše
 
-    setInterval(() => {
-      const timer = new Date();
-      const option = { hour: "numeric", minute: "numeric", second: "numeric" };
-      todayShowTime.textContent = new Intl.DateTimeFormat("en-us", option).format(timer);
-    }, 1000);
-  }, []); // 
+      setStatusMsg("Account created! Now you can login.");
+      setShowJoinModal(false);
+      setShowLoginModal(true);
+      
+    } 
+    catch (error) {
+    // Axios baca sve 4xx i 5xx greške ovde
+    console.error("Join error:", error.response);
+    const errorMsg = error.response?.data?.message || "Registration failed";
+    setStatusMsg(errorMsg);
+    }
+  };
+
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUsername("");
+    setPassword("");
+    setSelectedDate(null);
+    setTaskList("");
+  };
 
   return (
     <>
-      {/* Animirana pozadina */}
-      <div className="blob-outer-container">
-        <div className="blob-inner-container">
-          <div className="blob"></div>
+      {/* MODAL ZA LOGIN */}
+      {showLoginModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Login</h2>
+            <input placeholder="Username" onChange={(e) => setUsername(e.target.value)} />
+            <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
+            <button onClick={handleLogin}className="add-btn">Login</button>
+            <button onClick={() => setShowLoginModal(false)}className="add-btn">Close</button>
+            <p>{statusMsg}</p>
+          </div>
         </div>
+      )}
+      {/* MODAL ZA JOIN (REGISTRACIJU) */}
+      {showJoinModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Create Account</h2>
+            <input 
+              placeholder="Username" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)} 
+            />
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)} 
+            />
+            <button onClick={handleJoin} className="add-btn">Sign Up</button>
+            <button onClick={() => setShowJoinModal(false)} className="logout-btn">Cancel</button>
+            
+            {statusMsg && <p className="status-msg">{statusMsg}</p>}
+          </div>
+        </div>
+      )}
+
+      <div className="blob-outer-container">
+        <div className="blob-inner-container"><div className="blob"></div></div>
       </div>
 
-      {/* Gornje zaglavlje */}
       <header className="top-bar">
-        <h1 className="app-title">Planner</h1>
+        {/* Kontejner za logo sliku */}
+        <div className="logo-container">
+          <img src={logoImage} alt="Logo" className="logo-img" />
+        </div>
         <div className="auth-buttons">
-          <button className="login-btn">Login</button>
-          <button className="join-btn">Join</button>
+          {!isLoggedIn ? (
+            <>
+              <button onClick={() => setShowLoginModal(true)}>Login</button>
+              <button onClick={() => setShowJoinModal(true)}>Join</button>
+            </>
+          ) : (
+            <div className="user-info">
+              <span>Welcome, {username}</span>
+              <button className="logout-btn" onClick={handleLogout}>Logout</button>
+            </div>
+          )}
         </div>
       </header>
 
-      {/* Kalendar */}
-      <div className="outer-wrapper">
-        <div className="calendar">
-          <div className="calendar-header">
-            <span className="month-picker" id="month-picker">May</span>
-            <div className="year-picker" id="year-picker">
-              <span className="year-change" id="pre-year"><pre>{"<"}</pre></span>
-              <span id="year">2024</span>
-              <span className="year-change" id="next-year"><pre>{">"}</pre></span>
+      <div className="main-container">
+        <div className="outer-wrapper">
+          <div className="calendar">
+            <div className="calendar-header">
+              {/* MESEC SA STRELICAMA */}
+              <div className="month-picker-nav">
+                <span className="year-change" onClick={() => changeMonth(-1)}>{"<"}</span>
+                <span className="month-display">{month_names[currMonth]}</span>
+                <span className="year-change" onClick={() => changeMonth(1)}>{">"}</span>
+              </div>
+              {/* GODINA SA STRELICAMA */}
+              <div className="year-picker">
+                <span className="year-change" onClick={() => setCurrYear(currYear - 1)}>{"<"}</span>
+                <span>{currYear}</span>
+                <span className="year-change" onClick={() => setCurrYear(currYear + 1)}>{">"}</span>
+              </div>
+            </div>
+
+            <div className="calendar-body">
+              <div className="calendar-week-days">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+              </div>
+              <div className="calendar-days">
+                {Array.from({ length: new Date(currYear, currMonth, 1).getDay() }).map((_, i) => (
+                  <div key={`empty-${i}`} className="empty-day"></div>
+                ))}
+                {Array.from({ length: daysInMonth[currMonth] }).map((_, i) => {
+                  const day = i + 1;
+                  const isToday = day === new Date().getDate() && 
+                                  currMonth === new Date().getMonth() && 
+                                  currYear === new Date().getFullYear();
+                  return (
+                    <div key={day} className={isToday ? "current-date" : ""} onClick={() => handleDayClick(day)}>
+                      {day}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="calendar-body">
-            <div className="calendar-week-days">
-              <div>Sun</div><div>Mon</div><div>Tue</div>
-              <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-            </div>
-            <div className="calendar-days"></div>
-          </div>
-
-          <div className="calendar-footer"></div>
-
-          <div className="date-time-format">
-            <div className="day-text-format">TODAY</div>
-            <div className="date-time-value">
-              <div className="time-formate">00:00:00</div>
-              <div className="date-formate">--</div>
-            </div>
-          </div>
-
-          <div className="month-list"></div>
+        <div className="todo-list">
+          <h2>To-Do List</h2>
+          <p>Datum: {selectedDate || "Select a date"}</p>
+          <textarea
+            rows={10}
+            placeholder={isLoggedIn ? "Unesi svoj zadatak..." : "Prijavite se da biste pisali..."}
+            value={taskList}
+            disabled={!isLoggedIn}
+            onChange={(e) => setTaskList(e.target.value)}
+          />
+          <button className="add-btn" onClick={handleAddTask} disabled={!isLoggedIn}>
+            Add / Update
+          </button>
         </div>
       </div>
     </>

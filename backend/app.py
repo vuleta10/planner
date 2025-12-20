@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import psycopg2
 
 app = Flask(__name__)
+CORS(app)
 
 # ---------- DB CONNECTION ----------
 def get_db_connection():
@@ -94,10 +96,14 @@ def get_task():
 # ---------- ADD / UPDATE TASK (POST) ----------
 @app.route("/task", methods=["POST"])
 def add_task():
-    data = request.json
-    username = data["username"]
-    datum = data["datum"]
-    task2do = data["task2do"]
+    data = request.get_json() # Sigurnije preuzimanje JSON-a
+    if not data:
+        return jsonify({"error": "No JSON received"}), 400
+
+    # Koristimo get() da izbegnemo KeyError i automatski 400 error
+    username = data.get("username")
+    datum = data.get("datum")
+    task2do = data.get("task2do")
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -107,13 +113,12 @@ def add_task():
             """
             INSERT INTO planner.task (username, datum, task2do)
             VALUES (%s, %s, %s)
-            ON CONFLICT (username, datum)
-            DO UPDATE SET task2do = EXCLUDED.task2do
             """,
             (username, datum, task2do)
         )
         conn.commit()
     except Exception as e:
+        print(f"SQL Error: {e}") # OBAVEZNO pogledajte terminal
         conn.rollback()
         return jsonify({"status": "error", "message": str(e)}), 400
     finally:
@@ -121,7 +126,6 @@ def add_task():
         conn.close()
 
     return jsonify({"status": "task saved"}), 201
-
 
 # ---------- START SERVER ----------
 if __name__ == "__main__":
