@@ -1,0 +1,294 @@
+:root {
+  --dark-text: #f8fbff;
+  --light-body: #f3f8fe;
+  --light-main: #fefefe;
+  --light-text: #151426;
+  --light-btn: #0e0c5c;
+  --blue: #0b0b42;
+  --white: #fff;
+  --shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  --font-family: consolas;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.container,
+.outer-wrapper {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+}
+
+.calendar {
+  height: 540px;
+  width: 700px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 25px;
+  overflow: hidden;
+  padding: 20px 40px 0;
+  box-shadow: 0px 4px 25px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+  backdrop-filter: blur(10px);
+}
+
+/* HEADER */
+.calendar-header {
+  background: #0e0c5c;
+  color: var(--white);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 15px;
+  box-shadow: 0px 3px 15px rgba(0,0,0,0.2);
+}
+
+.calendar-week-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-top: 15px;
+  font-weight: 600;
+  color: rgb(104, 104, 104);
+}
+
+.calendar-week-days div {
+  display: grid;
+  place-items: center;
+  height: 40px;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.calendar-days div {
+  padding: 10px;
+  height: 40px;
+  text-align: center;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-days div:hover {
+  background-color: #0e0c5c;
+  color: white;
+  transform: scale(1.1);
+}
+
+.calendar-days div.current-date {
+  background-color: #0e0c5c;
+  color: var(--dark-text);
+  border-radius: 10px;
+}
+
+/* Datum i vreme */
+.date-time-format {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  color: var(--light-text);
+}
+.day-text-format {
+  font-size: 1.5rem;
+  padding-right: 10px;
+  border-right: 3px solid var(--light-btn);
+  margin-right: 10px;
+}
+.date-format {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+/* Animirana pozadina */
+.blob-outer-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(120px);
+}
+
+.blob-inner-container {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 100vw;
+  height: 100vh;
+  min-width: 1000px;
+  border-radius: 99999px;
+  overflow: hidden;
+  background-color: #f5f1ea;
+  transform: scale(0.99);
+}
+
+.blob {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: conic-gradient(
+    from 0deg,
+    #cbd5e1,
+    #1e3a8a,
+    #0f172a,
+    #000000,
+    #ffffff
+  );
+  animation: spinBlob 20s linear infinite;
+  opacity: 0.65;
+}
+/* --- Zaglavlje (header) --- */
+.top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(12px);
+  background: rgba(14, 12, 92, 0.25);
+  padding: 0 40px;
+  box-shadow: 0px 3px 10px rgba(0,0,0,0.2);
+  color: #fff;
+  z-index: 5;
+}
+
+.app-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.auth-buttons button {
+  margin-left: 15px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.login-btn {
+  background-color: transparent;
+  border: 1px solid white;
+  color: white;
+}
+
+.login-btn:hover {
+  background-color: rgba(255,255,255,0.2);
+}
+
+.join-btn {
+  background-color: white;
+  color: #0e0c5c;
+}
+
+.join-btn:hover {
+  background-color: #dbe2ff;
+}
+/* LOGIN / JOIN stranice */
+.auth-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(180deg, #e8ebff 0%, #f3f8ff 100%);
+}
+
+.auth-page input {
+  width: 240px;
+  margin: 5px;
+  padding: 10px;
+}
+
+.auth-page button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: #0e0c5c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.auth-page .link {
+  color: #0e0c5c;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* GLAVNI CONTAINER (planner) */
+.main-container {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 100px;
+}
+
+/* TO-DO LISTA */
+.todo-list {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  width: 300px;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+}
+
+.todo-list textarea {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: none;
+  padding: 10px;
+  margin-top: 8px;
+  font-family: "Poppins", sans-serif;
+}
+
+.add-btn {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #0e0c5c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.add-btn:hover {
+  background-color: #1e2ba8;
+}
+
+@keyframes spinBlob {
+  from {
+    transform: rotate(0deg) scale(2);
+  }
+  to {
+    transform: rotate(1turn) scale(2);
+  }
+}
